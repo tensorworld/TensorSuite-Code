@@ -9,13 +9,13 @@ memory threshold check before generating large tensors.
 Generate one tensor:
 
 ```bash
-python3 random_tensor_generator_limited.py output.tns D 2.0 50%1024 2%4096
+python3 SynTensorGen/random_tensor_generator_limited.py output.tns D 2.0 50%1024 2%4096
 ```
 
 Generate the preset tensor suite:
 
 ```bash
-bash generate_all_tensors_limited.sh
+bash SynTensorGen/generate_all_tensors_limited.sh
 ```
 
 The generated `.tns` file starts with the tensor order, then mode dimensions,
