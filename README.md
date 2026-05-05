@@ -23,15 +23,14 @@ then one-based coordinates followed by a Gaussian random value.
 
 ## GitHub Pages
 
-This repository includes a static homepage and a GitHub Actions workflow for
-Pages deployment. If the repository stays at `tensorworld/TensorSuite`, GitHub
-Pages will publish it at:
+The TensorSuite homepage is hosted separately at:
 
 ```text
 https://tensorworld.github.io/TensorSuite/
 ```
 
-To use the exact URL `https://tensorsuite.github.io/`, the GitHub Pages source
-must live in a GitHub account or organization named `tensorsuite`, in a
-repository named `tensorsuite.github.io`. The site files in this repository can
-be used there without changes.
+Website source is kept in:
+
+```text
+https://github.com/tensorworld/TensorSuite
+```
