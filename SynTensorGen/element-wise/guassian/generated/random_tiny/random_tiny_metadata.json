@@ -1,0 +1,44 @@
+{
+  "block_partitions": null,
+  "dense_modes": [],
+  "dimensions": [
+    64,
+    64,
+    64
+  ],
+  "duplicates": "allowed",
+  "endianness": "little",
+  "explicit_zeros": "disallowed",
+  "files": {
+    "binary": "random_tiny.tnsb",
+    "config": "config.yaml",
+    "readme": "README.md",
+    "text": "random_tiny.tns"
+  },
+  "group": "Synthetic",
+  "id": 1001,
+  "index_base": 0,
+  "index_type": "uint64",
+  "name": "random_tiny",
+  "nnz": 4096,
+  "nnz_block": null,
+  "numerical_symmetry": "no",
+  "order": 3,
+  "pattern_symmetry": "no",
+  "sort_order": [
+    0,
+    1,
+    2
+  ],
+  "sorted": "lexicographic",
+  "source": "Random structural TensorSuite generator",
+  "source_type": "synthetic",
+  "source_url": "",
+  "sparsity_type": "element",
+  "storage": "coordinate",
+  "time": "2025-06-05",
+  "value_domain": "binary",
+  "value_type": "float64",
+  "values_provided": true,
+  "version": "1.0"
+}

@@ -1,0 +1,34 @@
+name: random_large
+output_dir: generated
+provide_value: true
+generator:
+  type: random
+  random_seed: 42
+tensor:
+  sizes: [4096, 4096, 4096]
+  nnz: 1048576
+  index_base: 0
+random: {}
+format:
+  storage: coordinate
+  index_type: uint64
+  endianness: little
+  sorted: lexicographic
+  sorted_order: [0, 1, 2]
+  explicit_zeros: disallowed
+  pattern_symmetry: no
+  numerical_symmetry: no
+  sparsity_type: element
+  dense_modes: []
+value:
+  type: float64
+  mode: constant
+  constant: 1.0
+duplicates:
+  policy: allow
+output:
+  write_tns: true
+  write_tnsb: true
+  write_metadata: true
+  write_readme: true
+  copy_config: true
