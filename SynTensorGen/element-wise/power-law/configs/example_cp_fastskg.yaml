@@ -1,0 +1,59 @@
+# Minimal CP-seeded fastSKG example.
+# This config generates a 3-mode element-wise sparse tensor bundle.
+
+name: example_cp_fastskg
+output_dir: generated
+
+generator:
+  # cp_fastskg builds a CP-structured seed, then expands it with fastSKG.
+  type: cp_fastskg
+  random_seed: 42
+
+tensor:
+  # For fastSKG, final sizes must equal seed.cpd.sizes ** fastskg.iter.
+  sizes: [16, 16, 16]
+  index_base: 0
+  # Requested raw samples. The final metadata nnz may be smaller after deduplication.
+  nnz: 200
+
+format:
+  storage: coordinate
+  index_type: uint64
+  endianness: little
+  sorted: lexicographic
+  sorted_order: [0, 1, 2]
+  explicit_zeros: disallowed
+  pattern_symmetry: no
+  numerical_symmetry: no
+  sparsity_type: element
+  dense_modes: []
+
+seed:
+  source: cpd
+  cpd:
+    sizes: [4, 4, 4]
+    rank: 2
+    alpha: [1.4, 1.4, 1.4]
+    noise: 0.0
+    lambda_controller: softmax
+
+fastskg:
+  iter: 2
+
+value:
+  type: float64
+  mode: constant
+  constant: 1.0
+
+duplicates:
+  # keep: one entry per repeated coordinate
+  # sum: sum values for repeated coordinates
+  # allow: preserve repeated raw samples
+  policy: keep
+
+output:
+  write_tns: true
+  write_tnsb: true
+  write_metadata: true
+  write_readme: true
+  copy_config: true
