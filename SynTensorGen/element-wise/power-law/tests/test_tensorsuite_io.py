@@ -28,6 +28,6 @@ def test_write_and_read_tns(tmp_path: Path):
 
 def test_invalid_tns_magic_raises(tmp_path: Path):
     path = tmp_path / "bad.tns"
-    path.write_text("bad\n% version: 1.0\n% name: x\n2 2 2 0\n", encoding="utf-8")
+    path.write_text("bad\n% version: 0.1\n% name: x\n2 2 2 0\n", encoding="utf-8")
     with pytest.raises(ValueError, match="Invalid TNS magic"):
         parse_tns_header(path)

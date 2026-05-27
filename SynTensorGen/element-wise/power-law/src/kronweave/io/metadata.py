@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Sequence
 
 ALLOWED_METADATA_VALUES = {
-    "storage": {"coordinate"},
     "value_type": {"float32", "float64", "int32", "int64"},
     "value_domain": {"binary", "nonnegative", "general"},
     "index_type": {"uint32", "uint64"},
@@ -20,6 +19,11 @@ ALLOWED_METADATA_VALUES = {
 
 
 FORBIDDEN_METADATA_KEYS = {
+    "storage",
+    "source_url",
+    "dense_modes",
+    "block_partitions",
+    "nnz_block",
     "collision_rate",
     "duplicate_rate",
     "raw_sample_count",
@@ -60,17 +64,14 @@ def build_metadata(
     endianness: str = "little",
     sorted_state: str = "lexicographic",
     sorted_order: Sequence[int] | None = None,
-    storage: str = "coordinate",
     explicit_zeros: str = "disallowed",
     pattern_symmetry: str = "no",
     numerical_symmetry: str = "no",
     sparsity_type: str = "element",
-    dense_modes: Sequence[int] | None = None,
     values_provided: bool = True,
     files: dict | None = None,
     source: str = "KronWeave powerLawGenerator",
-    source_url: str = "",
-    version: str = "1.0",
+    version: str = "0.1",
     tensor_id: int | None = None,
 ) -> dict:
     dims_list = [int(d) for d in dims]
@@ -85,8 +86,6 @@ def build_metadata(
         "time": "2025-06-05",
         "source_type": "synthetic",
         "source": source,
-        "source_url": source_url,
-        "storage": storage,
         "value_type": value_type,
         "value_domain": value_domain,
         "values_provided": bool(values_provided),
@@ -100,12 +99,9 @@ def build_metadata(
         "pattern_symmetry": pattern_symmetry,
         "numerical_symmetry": numerical_symmetry,
         "sparsity_type": sparsity_type,
-        "dense_modes": [int(x) for x in (dense_modes or [])],
         "order": order,
         "dimensions": dims_list,
         "nnz": int(nnz),
-        "block_partitions": None,
-        "nnz_block": None,
         "files": files or {
             "binary": f"{name}.tnsb",
             "text": f"{name}.tns",
@@ -125,8 +121,6 @@ def validate_canonical_metadata(metadata: dict) -> None:
             raise ValueError(f"metadata.{key} must be one of {sorted(allowed)}, got {value!r}")
     if metadata.get("index_base") not in {0, 1}:
         raise ValueError("metadata.index_base must be 0 or 1")
-    if not isinstance(metadata.get("dense_modes"), list):
-        raise ValueError("metadata.dense_modes must be a list")
     if not isinstance(metadata.get("values_provided"), bool):
         raise ValueError("metadata.values_provided must be boolean")
     if not isinstance(metadata.get("id"), int) or metadata["id"] <= 1000:
@@ -135,10 +129,6 @@ def validate_canonical_metadata(metadata: dict) -> None:
         raise ValueError("metadata.time must be 2025-06-05")
     if metadata.get("source_type") != "synthetic":
         raise ValueError("metadata.source_type must be synthetic")
-    if metadata.get("block_partitions") is not None:
-        raise ValueError("metadata.block_partitions must be null for element tensors")
-    if metadata.get("nnz_block") is not None:
-        raise ValueError("metadata.nnz_block must be null for element tensors")
     order = int(metadata.get("order", -1))
     sorted_order = metadata.get("sort_order")
     if metadata.get("sorted") == "lexicographic":
@@ -152,7 +142,7 @@ def ensure_no_forbidden_metadata(metadata: dict) -> None:
     lowered = {str(k).lower() for k in metadata.keys()}
     forbidden = lowered & FORBIDDEN_METADATA_KEYS
     if forbidden:
-        raise ValueError(f"Metadata contains forbidden eval fields: {sorted(forbidden)}")
+        raise ValueError(f"Metadata contains forbidden fields: {sorted(forbidden)}")
 
 
 def write_metadata(path: str | Path, metadata: dict) -> None:

@@ -114,7 +114,7 @@ def test_malformed_or_non_mapping_yaml_rejected(tmp_path: Path, yaml_text: str):
 def test_invalid_fastskg_boundaries(tmp_path: Path, mutate, match):
     seed = tmp_path / "seed.tns"
     seed.write_text(
-        "%%TensorSuite-TNS\n% version: 1.0\n% name: seed\n2 2 2 1\n0 0 1.0\n",
+        "%%TensorSuite-TNS\n% version: 0.1\n% name: seed\n2 2 2 1\n0 0 1.0\n",
         encoding="utf-8",
     )
     cfg = _valid_zipf(tmp_path)
@@ -142,7 +142,7 @@ def test_invalid_fastskg_boundaries(tmp_path: Path, mutate, match):
 )
 def test_invalid_cp_fastskg_boundaries(tmp_path: Path, mutate, match):
     (tmp_path / "seed.tns").write_text(
-        "%%TensorSuite-TNS\n% version: 1.0\n% name: seed\n2 2 2 1\n0 0 1.0\n",
+        "%%TensorSuite-TNS\n% version: 0.1\n% name: seed\n2 2 2 1\n0 0 1.0\n",
         encoding="utf-8",
     )
     cfg = _valid_zipf(tmp_path)
@@ -163,7 +163,7 @@ def test_invalid_cp_fastskg_boundaries(tmp_path: Path, mutate, match):
 def test_kp_from_meta_requires_expand_iter(tmp_path: Path):
     seed = tmp_path / "seed.tns"
     seed.write_text(
-        "%%TensorSuite-TNS\n% version: 1.0\n% name: seed\n2 2 2 1\n0 0 1.0\n",
+        "%%TensorSuite-TNS\n% version: 0.1\n% name: seed\n2 2 2 1\n0 0 1.0\n",
         encoding="utf-8",
     )
     cfg = _valid_zipf(tmp_path)

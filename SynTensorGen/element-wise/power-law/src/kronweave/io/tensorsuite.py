@@ -12,7 +12,7 @@ import numpy as np
 
 TNS_MAGIC = "%%TensorSuite-TNS"
 TNSB_MAGIC = "%%TensorSuite-TNSB"
-DEFAULT_VERSION = "1.0"
+DEFAULT_VERSION = "0.1"
 INDEX_FORMATS = {
     "uint32": ("I", 4, 2**32 - 1),
     "uint64": ("Q", 8, 2**64 - 1),

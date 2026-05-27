@@ -65,12 +65,12 @@ def write_bundle_readme(
 - optional `plots/`
 
 ## Metadata JSON
-The metadata JSON stores only basic format and storage information. Collision rates, power-law fitting, low-rank stats, mode correlation, plots, and other evaluation results are not written into metadata JSON.
+The metadata JSON stores only basic TensorSuite metadata. Collision rates, power-law fitting, low-rank stats, mode correlation, plots, and other evaluation results are not written into metadata JSON.
 
 ## TensorSuite-TNS Format
 ```text
 %%TensorSuite-TNS
-% version: 1.0
+% version: 0.1
 % name: <name>
 <num_modes> <dim0> ... <dimD-1> <nnz>
 <coord0> ... <coordD-1> <value>
@@ -79,7 +79,7 @@ The metadata JSON stores only basic format and storage information. Collision ra
 ## TensorSuite-TNSB Format
 ```text
 %%TensorSuite-TNSB
-% version: 1.0
+% version: 0.1
 % name: <name>
 <num_modes> <dim0> ... <dimD-1> <nnz>
 [binary payload]

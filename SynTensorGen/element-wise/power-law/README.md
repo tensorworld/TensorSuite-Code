@@ -106,7 +106,7 @@ A generated bundle is one folder per tensor:
   optional cp_seed/
 ```
 
-- `<tensor-name>_metadata.json`: canonical metadata for identity, dimensions, storage attributes, value/index types, sorting, duplicate policy, and file mappings.
+- `<tensor-name>_metadata.json`: canonical metadata for identity, dimensions, value/index types, sorting, duplicate policy, and file mappings.
 - `<tensor-name>.tns`: text coordinate data. The file starts with `%%TensorSuite-TNS`, `% version`, `% name`, then a size line `<order> <dim0> ... <dimD-1> <nnz>`, followed by coordinate/value records.
 - `<tensor-name>.tnsb`: binary coordinate data. It uses the same minimal cross-check header as `.tns`, followed by binary coordinate/value records using the configured `index_type`, `value_type`, and `endianness`.
 - `README.md`: auxiliary generation notes that should not be placed in canonical metadata, such as duplicate statistics or generation provenance.

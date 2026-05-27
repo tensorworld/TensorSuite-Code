@@ -47,21 +47,23 @@ def test_metadata_matches_tensorsuite_element_expectations(tmp_path: Path):
     metadata = validate_bundle(result["bundle_dir"])["metadata"]
     raw = json.loads(result["metadata"].read_text(encoding="utf-8"))
 
-    assert metadata["version"] == "1.0"
+    assert metadata["version"] == "0.1"
     assert metadata["name"] == "metadata_schema"
     assert isinstance(metadata["id"], int) and metadata["id"] > 1000
     assert metadata["time"] == "2025-06-05"
     assert metadata["source_type"] == "synthetic"
     assert metadata["source"] == "KronWeave powerLawGenerator"
-    assert metadata["source_url"] == ""
     assert metadata["values_provided"] is True
     assert metadata["endianness"] == "little"
     assert metadata["sort_order"] == [0, 1, 2]
+    assert len(raw) == 24
+    assert "storage" not in raw
+    assert "source_url" not in raw
+    assert "dense_modes" not in raw
+    assert "block_partitions" not in raw
+    assert "nnz_block" not in raw
     assert "sorted_order" not in raw
     assert metadata["sparsity_type"] == "element"
-    assert metadata["dense_modes"] == []
-    assert metadata["block_partitions"] is None
-    assert metadata["nnz_block"] is None
     assert metadata["files"] == {
         "binary": "metadata_schema.tnsb",
         "text": "metadata_schema.tns",

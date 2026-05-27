@@ -108,7 +108,7 @@ def test_fastskg_input_seed_relative_to_config_path_executes(tmp_path: Path):
         "\n".join(
             [
                 "%%TensorSuite-TNS",
-                "% version: 1.0",
+                "% version: 0.1",
                 "% name: seed",
                 "2 2 2 4",
                 "0 0 0.8",

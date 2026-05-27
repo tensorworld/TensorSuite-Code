@@ -124,7 +124,7 @@ static bool fastSKGOmp(const Tensor& initiator,
     for (long long i = 0; i < seedElementNum; i++) E1 += initiator.values[i];
     long long E = user_assigned_nnz > 0 ? user_assigned_nnz : (long long)llround(pow(E1, num_iter));
     fout << "%%TensorSuite-TNS\n";
-    fout << "% version: 1.0\n";
+    fout << "% version: 0.1\n";
     fout << "% name: " << name << "\n";
     fout << D;
     for (int d = 0; d < D; d++) fout << " " << out_dims[d];

@@ -140,12 +140,10 @@ def _finalize_bundle(
         endianness=fmt.get("endianness", "little"),
         sorted_state=fmt.get("sorted", "lexicographic"),
         sorted_order=fmt.get("sorted_order", list(range(len(dims)))),
-        storage=fmt.get("storage", "coordinate"),
         explicit_zeros=fmt.get("explicit_zeros", "disallowed"),
         pattern_symmetry=fmt.get("pattern_symmetry", "no"),
         numerical_symmetry=fmt.get("numerical_symmetry", "no"),
         sparsity_type=fmt.get("sparsity_type", "element"),
-        dense_modes=fmt.get("dense_modes", []),
         values_provided=values_provided,
         files={
             "text": f"{name}.tns" if output_cfg.get("write_tns", True) else None,
