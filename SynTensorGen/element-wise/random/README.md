@@ -1,9 +1,9 @@
 # Random Structural Generator
 
 This directory contains a small Python TensorSuite-style sparse tensor generator.
-It targets a random row-degree pattern for each mode-i unfolding by drawing
-random per-row weights for every mode and converting them to integer row
-degrees.
+It targets a uniform random mode-wise row-degree model for `Nd~d`: for each
+mode, row degrees are sampled from a uniform integer range and then rebalanced
+so the degree sum is exactly `tensor.nnz`.
 
 ## Usage
 
@@ -30,3 +30,6 @@ The generated bundle contains:
 - `duplicates.policy: allow` preserves the sampled mode degree sequences most
   directly. `keep` and `sum` can change the final degree distribution because
   they remove duplicate coordinates.
+- `random.low` and `random.high` can be scalars or per-mode lists. Defaults are
+  `0` and `2 * tensor.nnz / tensor.sizes[i]`, so the uniform degree range is
+  centered on the required mean degree.
