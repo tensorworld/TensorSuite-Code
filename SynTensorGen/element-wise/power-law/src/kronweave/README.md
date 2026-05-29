@@ -7,7 +7,7 @@ Top-level Python package.
 - `cli.py`: defines the `kronweave` command-line interface.
 - `config.py`: loads and validates YAML configuration files.
 - `analysis/`: degree plotting and empirical power-law analysis helpers.
-- `io/`: TensorSuite text/binary IO, metadata, and bundle README writers.
+- `io/`: compatibility wrappers for the shared repository-level `tensorsuiteIO/` helpers.
 - `postprocess/`: duplicate-coordinate and value-generation helpers.
 - `runners/`: wrappers around external generation backends.
 - `seed/`: CPD, Kronecker-product, and Zipf seed/baseline generation.

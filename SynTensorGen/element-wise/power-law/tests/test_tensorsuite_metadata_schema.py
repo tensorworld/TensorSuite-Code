@@ -49,19 +49,19 @@ def test_metadata_matches_tensorsuite_element_expectations(tmp_path: Path):
 
     assert metadata["version"] == "0.1"
     assert metadata["name"] == "metadata_schema"
-    assert isinstance(metadata["id"], int) and metadata["id"] > 1000
+    assert metadata["id"] == "1001"
     assert metadata["time"] == "2025-06-05"
     assert metadata["source_type"] == "synthetic"
     assert metadata["source"] == "KronWeave powerLawGenerator"
     assert metadata["values_provided"] is True
     assert metadata["endianness"] == "little"
-    assert metadata["sort_order"] == [0, 1, 2]
-    assert len(raw) == 24
+    assert metadata["sort_order"] == [1, 2, 3]
+    assert len(raw) == 28
     assert "storage" not in raw
-    assert "source_url" not in raw
-    assert "dense_modes" not in raw
-    assert "block_partitions" not in raw
-    assert "nnz_block" not in raw
+    assert raw["source_url"] == ""
+    assert raw["dense_modes"] == []
+    assert raw["block_partitions"] is None
+    assert raw["nnz_block"] is None
     assert "sorted_order" not in raw
     assert metadata["sparsity_type"] == "element"
     assert metadata["files"] == {

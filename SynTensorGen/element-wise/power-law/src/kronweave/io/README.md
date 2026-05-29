@@ -1,8 +1,7 @@
 # io
 
-TensorSuite bundle input and output helpers.
+Compatibility wrappers for TensorSuite bundle input and output helpers.
 
-- `__init__.py`: marks this directory as the IO subpackage.
-- `metadata.py`: builds, validates, reads, and writes canonical metadata JSON.
-- `readme_writer.py`: writes the per-bundle human-readable README.
-- `tensorsuite.py`: parses and writes TensorSuite-TNS text files, converts to TensorSuite-TNSB binary files, reads binary samples, and cross-checks headers.
+The shared implementation now lives at the repository root in
+`tensorsuiteIO/`. These files keep the existing `kronweave.io.*` import path
+working for power-law code and tests.

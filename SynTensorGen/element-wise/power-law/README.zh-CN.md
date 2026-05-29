@@ -28,6 +28,8 @@ Code/
   example.py           最小 Python API 示例
 ```
 
+共享 TensorSuite IO helper 位于 repo 根目录的 `tensorsuiteIO/`。
+
 
 ## 环境要求
 
@@ -94,6 +96,10 @@ kronweave generate --config configs/fastskg_input_seed_tiny.yaml
 ## TensorSuite Bundle
 
 KronWeave 会写出 TensorSuite 风格的 tensor bundle。TensorSuite 格式说明见 `../TensorSuite/format.html`。当前版本的 KronWeave 写出的是 element-wise coordinate sparse tensor，不是 block-sparse tensor。
+
+TensorSuite 写出、metadata 校验、bundle README 生成和 header cross-check
+使用 repo 根目录下共享的 `tensorsuiteIO/` helper。`kronweave.io.*`
+模块保留为兼容入口，供已有 power-law import 继续使用。
 
 一个生成后的 bundle 是一个 tensor 对应一个文件夹：
 
@@ -230,7 +236,7 @@ output:
 - `index_type`：`.tnsb` 中坐标的存储类型，`uint32` 或 `uint64`。
 - `endianness`：`.tnsb` binary records 的字节序，`little` 或 `big`。
 - `sorted`：`lexicographic` 或 `none`。
-- `sorted_order`：当 `sorted=lexicographic` 时使用的 0-based mode permutation，例如 `[0, 1, 2]`。
+- `sorted_order`：YAML 配置里 `sorted=lexicographic` 时使用的 0-based mode permutation，例如 `[0, 1, 2]`。canonical metadata 会按 TensorSuite 网站格式写成 1-based mode ids，例如 `[1, 2, 3]`。
 - `explicit_zeros`：`allowed` 或 `disallowed`。如果是 `disallowed`，写出前会删除零值条目。
 - `pattern_symmetry`：当前为 `no`。
 - `numerical_symmetry`：当前为 `no`。

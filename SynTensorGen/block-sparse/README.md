@@ -109,6 +109,11 @@ and name comments, size line (`order dim1…dimN nnz`), partition-count line
 (`nblocks1…nblocksN nnz_block`), one partition-size array per mode (in storage
 label order), then 0-based block coordinates sorted lexicographically.
 
+The shared `tensorsuiteIO.read_tns()` loader can read these bundles when the
+metadata file is present beside the `.tns` file, or when metadata is passed
+explicitly. It returns `BlockTensorData` for `sparsity_type=block`; element-wise
+bundles still return `TensorData`.
+
 ## Validation
 
 The CLI fails on:

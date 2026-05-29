@@ -1,21 +1,31 @@
 from __future__ import annotations
 
 import argparse
-import json
-import math
 import shutil
-import struct
+import sys
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 import numpy as np
 import yaml
 
-TNS_MAGIC = "%%TensorSuite-TNS"
-TNSB_MAGIC = "%%TensorSuite-TNSB"
-VERSION = "0.1"
-INDEX_FORMATS = {"uint32": ("I", 4, 2**32 - 1), "uint64": ("Q", 8, 2**64 - 1)}
-VALUE_FORMATS = {"float32": ("f", 4, np.float32), "float64": ("d", 8, np.float64), "int32": ("i", 4, np.int32), "int64": ("q", 8, np.int64)}
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from tensorsuiteIO.metadata import build_metadata, read_metadata, write_metadata  # noqa: E402
+from tensorsuiteIO.readme_writer import write_bundle_readme  # noqa: E402
+from tensorsuiteIO.tensorsuite import (  # noqa: E402
+    INDEX_FORMATS,
+    cross_check_header_metadata,
+    cross_check_tns_tnsb,
+    parse_tns_header,
+    parse_tnsb_header,
+    write_tns,
+    write_tnsb_from_tns,
+)
+
+VALUE_DTYPES = {"float32": np.float32, "float64": np.float64, "int32": np.int32, "int64": np.int64}
 
 
 def _load_yaml(path: str | Path) -> dict[str, Any]:
@@ -131,7 +141,7 @@ def validate_config(config: dict[str, Any], expected_type: str) -> dict[str, Any
 
     value = config.setdefault("value", {"type": "float64", "mode": "constant", "constant": 1.0})
     value.setdefault("type", "float64")
-    if value["type"] not in VALUE_FORMATS:
+    if value["type"] not in VALUE_DTYPES:
         raise ValueError("value.type must be float32, float64, int32, or int64")
     fmt["value_domain"] = infer_value_domain(value)
 
@@ -156,7 +166,7 @@ def validate_config(config: dict[str, Any], expected_type: str) -> dict[str, Any
 
 def generate_values(n: int, value_cfg: dict[str, Any], seed: int | None) -> np.ndarray:
     mode = value_cfg.get("mode", "constant")
-    dtype = VALUE_FORMATS[value_cfg.get("type", "float64")][2]
+    dtype = VALUE_DTYPES[value_cfg.get("type", "float64")]
     if mode == "constant":
         return np.full(n, float(value_cfg.get("constant", 1.0)), dtype=dtype)
     rng = np.random.default_rng(seed)
@@ -205,105 +215,34 @@ def _sort_entries(config: dict[str, Any], coords: np.ndarray, values: np.ndarray
     return coords[order], values[order]
 
 
-def _format_value(value: Any) -> str:
-    v = float(value)
-    if not math.isfinite(v):
-        raise ValueError("values must be finite")
-    return f"{v:.16e}"
-
-
-def write_tns(path: Path, name: str, dims: Sequence[int], coords: np.ndarray, values: np.ndarray, index_base: int, values_provided: bool) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        f.write(f"{TNS_MAGIC}\n")
-        f.write(f"% version: {VERSION}\n")
-        f.write(f"% name: {name}\n")
-        f.write(" ".join([str(len(dims)), *map(str, dims), str(len(coords))]) + "\n")
-        for coord, value in zip(coords, values):
-            stored = [str(int(x) + index_base) for x in coord]
-            if values_provided:
-                f.write(" ".join(stored) + " " + _format_value(value) + "\n")
-            else:
-                f.write(" ".join(stored) + "\n")
-
-
-def write_tnsb(path: Path, name: str, dims: Sequence[int], coords: np.ndarray, values: np.ndarray, index_base: int, index_type: str, value_type: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fmt = "<" + INDEX_FORMATS[index_type][0] * len(dims) + VALUE_FORMATS[value_type][0]
-    max_index = INDEX_FORMATS[index_type][2]
-    with path.open("wb") as f:
-        f.write(f"{TNSB_MAGIC}\n".encode("utf-8"))
-        f.write(f"% version: {VERSION}\n".encode("utf-8"))
-        f.write(f"% name: {name}\n".encode("utf-8"))
-        f.write((" ".join([str(len(dims)), *map(str, dims), str(len(coords))]) + "\n").encode("utf-8"))
-        for coord, value in zip(coords, values):
-            stored = [int(x) + index_base for x in coord]
-            if any(x < 0 or x > max_index for x in stored):
-                raise ValueError(f"coordinate cannot be stored as {index_type}")
-            packed_value = int(value) if value_type.startswith("int") else float(value)
-            f.write(struct.pack(fmt, *stored, packed_value))
-
-
 def _metadata(config: dict[str, Any], name: str, kind: str, coords: np.ndarray) -> dict[str, Any]:
     fmt = config["format"]
     output = config["output"]
-    policy_map = {"allow": "allowed", "keep": "disallowed", "sum": "summed"}
-    return {
-        "version": VERSION,
-        "name": name,
-        "group": "Synthetic",
-        "id": 1001,
-        "time": "2025-06-05",
-        "source_type": "synthetic",
-        "source": f"{kind.capitalize()} structural TensorSuite generator",
-        "value_type": config["value"].get("type", "float64"),
-        "value_domain": fmt["value_domain"],
-        "values_provided": bool(config["values_provided"]),
-        "index_type": fmt["index_type"],
-        "endianness": "little",
-        "index_base": int(config["tensor"].get("index_base", 0)),
-        "sorted": fmt["sorted"],
-        "sort_order": fmt["sorted_order"],
-        "duplicates": policy_map[config["duplicates"].get("policy", "allow")],
-        "explicit_zeros": fmt["explicit_zeros"],
-        "pattern_symmetry": fmt["pattern_symmetry"],
-        "numerical_symmetry": fmt["numerical_symmetry"],
-        "sparsity_type": "element",
-        "order": len(config["tensor"]["sizes"]),
-        "dimensions": config["tensor"]["sizes"],
-        "nnz": int(len(coords)),
-        "files": {
+    return build_metadata(
+        name=name,
+        dims=config["tensor"]["sizes"],
+        nnz=len(coords),
+        index_base=int(config["tensor"].get("index_base", 0)),
+        value_domain=fmt["value_domain"],
+        duplicate_policy=config["duplicates"].get("policy", "allow"),
+        value_type=config["value"].get("type", "float64"),
+        index_type=fmt["index_type"],
+        endianness=fmt["endianness"],
+        sorted_state=fmt["sorted"],
+        sorted_order=fmt["sorted_order"],
+        explicit_zeros=fmt["explicit_zeros"],
+        pattern_symmetry=fmt["pattern_symmetry"],
+        numerical_symmetry=fmt["numerical_symmetry"],
+        sparsity_type=fmt["sparsity_type"],
+        values_provided=bool(config["values_provided"]),
+        source=f"{kind.capitalize()} structural TensorSuite generator",
+        files={
             "text": f"{name}.tns" if output.get("write_tns", True) else None,
             "binary": f"{name}.tnsb" if output.get("write_tnsb", True) else None,
             "readme": "README.md" if output.get("write_readme", True) else None,
             "config": "config.yaml" if output.get("copy_config", True) else None,
         },
-    }
-
-
-def _write_bundle_readme(path: Path, name: str, kind: str, metadata: dict[str, Any], stats: dict[str, Any]) -> None:
-    text = f"""# {name}
-
-Synthetic TensorSuite-style sparse tensor bundle.
-
-- Structural distribution: `{kind}`
-- Order: `{metadata["order"]}`
-- Dimensions: `{metadata["dimensions"]}`
-- Nonzeros: `{metadata["nnz"]}`
-- Values provided: `{str(metadata["values_provided"]).lower()}`
-- Text file: `{metadata["files"]["text"]}`
-- Binary file: `{metadata["files"]["binary"]}`
-- Duplicate policy: `{metadata["duplicates"]}`
-
-For each mode-i unfolding, the row degree samples are generated from the `{kind}` structural model before duplicate postprocessing.
-
-Duplicate stats:
-
-```json
-{json.dumps(stats, indent=2)}
-```
-"""
-    path.write_text(text, encoding="utf-8")
+    )
 
 
 def generate_from_config(
@@ -338,72 +277,59 @@ def generate_from_config(
     if config["output"].get("copy_config", True):
         (bundle_dir / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     if config["output"].get("write_tns", True):
-        write_tns(tns, name, config["tensor"]["sizes"], coords, values, config["tensor"]["index_base"], bool(config["values_provided"]))
-    if config["output"].get("write_tnsb", True):
-        write_tnsb(
-            tnsb,
+        write_tns(
+            tns,
             name,
             config["tensor"]["sizes"],
             coords,
             values,
-            config["tensor"]["index_base"],
-            config["format"]["index_type"],
-            config["value"].get("type", "float64"),
+            index_base=config["tensor"]["index_base"],
+            values_provided=bool(config["values_provided"]),
+        )
+    if config["output"].get("write_tnsb", True):
+        write_tnsb_from_tns(
+            tns,
+            tnsb,
+            index_type=config["format"]["index_type"],
+            value_type=config["value"].get("type", "float64"),
+            endianness=config["format"]["endianness"],
         )
     metadata = _metadata(config, name, expected_type, coords)
     if config["output"].get("write_metadata", True):
-        metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_metadata(metadata_path, metadata)
     if config["output"].get("write_readme", True):
-        _write_bundle_readme(readme_path, name, expected_type, metadata, stats)
+        write_bundle_readme(
+            readme_path,
+            name,
+            metadata,
+            config,
+            config_path=str(config_path),
+            config_snapshot_path="config.yaml" if config["output"].get("copy_config", True) else None,
+            duplicate_stats=stats,
+            generation_info={"role": expected_type, "meta_seed": "Not applicable."},
+        )
     validate_bundle(bundle_dir)
     return {"bundle_dir": bundle_dir, "tns": tns, "tnsb": tnsb, "metadata": metadata_path, "readme": readme_path}
-
-
-def _parse_text_header(path: Path, binary: bool = False) -> tuple[str, str, str, list[int], int, int]:
-    mode = "rb" if binary else "r"
-    with path.open(mode) as f:
-        lines = [f.readline() for _ in range(4)]
-        offset = f.tell()
-    if binary:
-        lines = [line.decode("utf-8") for line in lines]
-    magic, version_line, name_line, size_line = [str(line).strip() for line in lines]
-    version = version_line.split(":", 1)[1].strip()
-    name = name_line.split(":", 1)[1].strip()
-    parts = [int(x) for x in size_line.split()]
-    order = parts[0]
-    dims = parts[1:-1]
-    nnz = parts[-1]
-    return magic, version, name, dims, nnz, offset
 
 
 def validate_bundle(bundle_dir: str | Path) -> dict[str, Any]:
     bundle = Path(bundle_dir)
     name = bundle.name
     metadata_path = bundle / f"{name}_metadata.json"
-    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata = read_metadata(metadata_path)
     files = metadata["files"]
+    tns = bundle / files["text"] if files.get("text") else None
+    tnsb = bundle / files["binary"] if files.get("binary") else None
     if files.get("text"):
-        tns = bundle / files["text"]
-        magic, version, tns_name, dims, nnz, _ = _parse_text_header(tns)
-        if magic != TNS_MAGIC or version != metadata["version"] or tns_name != metadata["name"]:
-            raise ValueError("TNS header mismatch")
-        if dims != metadata["dimensions"] or nnz != metadata["nnz"]:
-            raise ValueError("TNS size line mismatch")
+        cross_check_header_metadata(parse_tns_header(tns), metadata)
         expected_fields = metadata["order"] + (1 if metadata["values_provided"] else 0)
         rows = [line.split() for line in tns.read_text(encoding="utf-8").splitlines()[4:] if line.strip()]
         if len(rows) != metadata["nnz"] or any(len(row) != expected_fields for row in rows):
             raise ValueError("TNS payload mismatch")
     if files.get("binary"):
-        tnsb = bundle / files["binary"]
-        magic, version, tnsb_name, dims, nnz, offset = _parse_text_header(tnsb, binary=True)
-        if magic != TNSB_MAGIC or version != metadata["version"] or tnsb_name != metadata["name"]:
-            raise ValueError("TNSB header mismatch")
-        if dims != metadata["dimensions"] or nnz != metadata["nnz"]:
-            raise ValueError("TNSB size line mismatch")
-        record_size = INDEX_FORMATS[metadata["index_type"]][1] * metadata["order"] + VALUE_FORMATS[metadata["value_type"]][1]
-        payload = tnsb.stat().st_size - offset
-        if payload != record_size * metadata["nnz"]:
-            raise ValueError("TNSB payload size mismatch")
+        cross_check_header_metadata(parse_tnsb_header(tnsb), metadata)
+    if tns and tnsb:
+        cross_check_tns_tnsb(tns, tnsb, metadata=metadata)
     if not files.get("text") and not files.get("binary"):
         raise ValueError("bundle has no tensor data file")
     return {"bundle_dir": bundle, "metadata": metadata}

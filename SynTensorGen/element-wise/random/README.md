@@ -5,6 +5,10 @@ It targets a uniform random mode-wise row-degree model for `Nd~d`: for each
 mode, row degrees are sampled from a uniform integer range and then rebalanced
 so the degree sum is exactly `tensor.nnz`.
 
+TensorSuite file writing, metadata validation, bundle README generation, and
+header cross-checks are provided by the shared repository-level
+`tensorsuiteIO/` helpers.
+
 ## Usage
 
 ```bash

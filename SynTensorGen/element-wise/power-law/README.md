@@ -28,6 +28,9 @@ Code/
   example.py           Minimal Python API example
 ```
 
+The shared TensorSuite IO helpers live at the repository root in
+`tensorsuiteIO/`.
+
 ## Requirements
 
 - Python 3.10+
@@ -93,6 +96,11 @@ kronweave generate --config configs/fastskg_input_seed_tiny.yaml
 ## TensorSuite Bundle
 
 KronWeave writes TensorSuite-style tensor bundles. See `../TensorSuite/format.html` for the TensorSuite format page. In this release, KronWeave writes element-wise coordinate sparse tensors, not block-sparse tensors.
+
+TensorSuite writing, metadata validation, bundle README generation, and
+header cross-checks use the shared repository-level `tensorsuiteIO/` helpers.
+The `kronweave.io.*` modules remain as compatibility wrappers for existing
+power-law imports.
 
 A generated bundle is one folder per tensor:
 
@@ -229,7 +237,7 @@ Top-level fields:
 - `index_type`: `uint32` or `uint64` for `.tnsb` coordinate storage.
 - `endianness`: currently `little` for generated TensorSuite bundles.
 - `sorted`: `lexicographic` or `none`.
-- `sorted_order`: 0-based mode permutation used when `sorted=lexicographic`, for example `[0, 1, 2]`. `sort_order` is accepted as an alias and canonical metadata uses `sort_order`.
+- `sorted_order`: 0-based mode permutation used by YAML config when `sorted=lexicographic`, for example `[0, 1, 2]`. `sort_order` is accepted as an alias. Canonical metadata writes `sort_order` using TensorSuite's 1-based mode ids, for example `[1, 2, 3]`.
 - `explicit_zeros`: `allowed` or `disallowed`. When disallowed, zero-valued entries are removed before writing.
 - `pattern_symmetry`: currently `no`.
 - `numerical_symmetry`: currently `no`.
